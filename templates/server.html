@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Voti e Recensioni</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 30%;
+            padding: 10px;
+            margin: 10px 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .esci {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 15px;
+            background-color: #green;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-align: center;
+            width: 100px;
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <button class="esci" onclick="window.location.href='/login'">Esci</button>
+    <input type="text" id="searchVoti" placeholder="Cerca per Professore o Materia" oninput="filtroVoti()">
+
+    <h1>Gestione Voti</h1>
+
+    <table id="tabellaVoti">
+        <thead>
+            <tr>
+                <th>Nome Professore</th>
+                <th>Materia</th>
+                <th>Voto</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div style="text-align: center;">
+        <input type="text" id="nomeProf" placeholder="Nome Professore">
+        <input type="text" id="materia" placeholder="Materia">
+        <input type="text" id="voto" placeholder="Voto" oninput="validareVoto()">
+        <button onclick="aggiungiVoto()">Aggiungi</button>
+        <button onclick="annullaInput()">Annulla</button>
+    </div>
+
+    <h1>Gestione Recensioni</h1>
+
+    <table id="tabellaRecensioni">
+        <thead>
+            <tr>
+                <th>Nome Studente</th>
+                <th>Nome Professore</th>
+                <th>Recensione</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div style="text-align: center;">
+        <input type="text" id="nomeStudente" placeholder="Nome Studente">
+        <input type="text" id="nomeProfRec" placeholder="Nome Professore">
+        <input type="text" id="recensione" placeholder="Recensione">
+        <button onclick="aggiungiRecensione()">Aggiungi Recensione</button>
+        <button onclick="annullaRecensione()">Annulla</button>
+    </div>
+<div>
+    
+    <script>
+        function filtroVoti() {
+            var input = document.getElementById("searchVoti").value.toLowerCase();
+            var tabella = document.getElementById("tabellaVoti").getElementsByTagName('tbody')[0];
+            var righe = tabella.getElementsByTagName('tr');
+            for (var i = 0; i < righe.length; i++) {
+                var cells = righe[i].getElementsByTagName('td');
+                var nomeProf = cells[0].textContent.toLowerCase();
+                var materia = cells[1].textContent.toLowerCase();
+                if (nomeProf.includes(input) || materia.includes(input)) {
+                    righe[i].style.display = "";
+                } else {
+                    righe[i].style.display = "none";
+                }
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            caricaVoti();
+            caricaRecensioni();
+        });
+
+        let editingVoto = null;  // To store the index of the voto being edited
+        let editingRecensione = null;  // To store the index of the recensione being edited
+
+        // Funzione per validare l'input del voto (numeri, virgole, e punti)
+        function validareVoto() {
+            var voto = document.getElementById("voto").value;
+            // Permette solo numeri, virgola e punto
+            var regex = /^[0-9,\.]*$/;
+            if (!regex.test(voto)) {
+                // Se il valore non è valido, rimuove l'ultimo carattere
+                document.getElementById("voto").value = voto.slice(0, -1);
+            }
+        }
+
+        function aggiungiVoto() {
+            var nomeProf = document.getElementById("nomeProf").value;
+            var materia = document.getElementById("materia").value;
+            var voto = document.getElementById("voto").value;
+
+            if (nomeProf && materia && voto) {
+                var voti = JSON.parse(localStorage.getItem("voti")) || [];
+                if (editingVoto !== null) {
+                    // Update the existing voto
+                    voti[editingVoto] = { nomeProf, materia, voto };
+                    editingVoto = null;  // Clear editing flag
+                } else {
+                    // Add new voto
+                    voti.push({ nomeProf, materia, voto });
+                }
+                localStorage.setItem("voti", JSON.stringify(voti));
+                caricaVoti();
+                annullaInput();
+            } else {
+                alert("Compila tutti i campi!");
+            }
+        }
+
+        function aggiungiRigaVoto(nomeProf, materia, voto, index) {
+            var tabella = document.getElementById("tabellaVoti").getElementsByTagName('tbody')[0];
+            var nuovaRiga = tabella.insertRow();
+
+            var cellaNomeProf = nuovaRiga.insertCell(0);
+            var cellaMateria = nuovaRiga.insertCell(1);
+            var cellaVoto = nuovaRiga.insertCell(2);
+            var cellaAzioni = nuovaRiga.insertCell(3);
+
+            cellaNomeProf.textContent = nomeProf;
+            cellaMateria.textContent = materia;
+            cellaVoto.textContent = voto;
+            cellaAzioni.innerHTML = `
+                <button onclick="modificaVoto(${index})">Modifica</button>
+                <button onclick="eliminaVoto(this)">Elimina</button>
+            `;
+        }
+
+        function caricaVoti() {
+            var voti = JSON.parse(localStorage.getItem("voti")) || [];
+            var tabella = document.getElementById("tabellaVoti").getElementsByTagName('tbody')[0];
+            tabella.innerHTML = '';  // Clear the table before reloading
+            voti.forEach(function (voto, index) {
+                aggiungiRigaVoto(voto.nomeProf, voto.materia, voto.voto, index);
+            });
+        }
+
+        function modificaVoto(index) {
+            var voti = JSON.parse(localStorage.getItem("voti")) || [];
+            var voto = voti[index];
+            document.getElementById("nomeProf").value = voto.nomeProf;
+            document.getElementById("materia").value = voto.materia;
+            document.getElementById("voto").value = voto.voto;
+            editingVoto = index;  // Set the editing flag
+        }
+
+        function eliminaVoto(button) {
+            if (confirm("Sei sicuro di voler eliminare questo voto?")) {
+                var riga = button.parentNode.parentNode;
+                riga.parentNode.removeChild(riga);
+                aggiornaVoti();
+            }
+        }
+
+        function aggiornaVoti() {
+            var tabella = document.getElementById("tabellaVoti").getElementsByTagName('tbody')[0];
+            var voti = [];
+            for (var i = 0; i < tabella.rows.length; i++) {
+                var riga = tabella.rows[i];
+                voti.push({
+                    nomeProf: riga.cells[0].textContent,
+                    materia: riga.cells[1].textContent,
+                    voto: riga.cells[2].textContent
+                });
+            }
+            localStorage.setItem("voti", JSON.stringify(voti));
+        }
+
+        function annullaInput() {
+            document.getElementById("nomeProf").value = '';
+            document.getElementById("materia").value = '';
+            document.getElementById("voto").value = '';
+        }
+
+        // Recensione section
+        function aggiungiRecensione() {
+            var nomeStudente = document.getElementById("nomeStudente").value;
+            var nomeProfRec = document.getElementById("nomeProfRec").value;
+            var recensione = document.getElementById("recensione").value;
+
+            if (nomeStudente && nomeProfRec && recensione) {
+                var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+                if (editingRecensione !== null) {
+                    // Update the existing recensione
+                    recensioni[editingRecensione] = { nomeStudente, nomeProfRec, recensione };
+                    editingRecensione = null;  // Clear editing flag
+                } else {
+                    // Add new recensione
+                    recensioni.push({ nomeStudente, nomeProfRec, recensione });
+                }
+                localStorage.setItem("recensioni", JSON.stringify(recensioni));
+                caricaRecensioni();
+                annullaRecensione();
+            } else {
+                alert("Compila tutti i campi!");
+            }
+        }
+
+        function caricaRecensioni() {
+            var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+            var tabella = document.getElementById("tabellaRecensioni").getElementsByTagName('tbody')[0];
+            tabella.innerHTML = '';  // Clear the table before reloading
+            recensioni.forEach(function (recensione, index) {
+                aggiungiRigaRecensione(recensione.nomeStudente, recensione.nomeProfRec, recensione.recensione, index);
+            });
+        }
+
+        function aggiungiRigaRecensione(nomeStudente, nomeProfRec, recensione, index) {
+            var tabella = document.getElementById("tabellaRecensioni").getElementsByTagName('tbody')[0];
+            var nuovaRiga = tabella.insertRow();
+
+            var cellaNomeStudente = nuovaRiga.insertCell(0);
+            var cellaNomeProfRec = nuovaRiga.insertCell(1);
+            var cellaRecensione = nuovaRiga.insertCell(2);
+            var cellaAzioni = nuovaRiga.insertCell(3);
+
+            cellaNomeStudente.textContent = nomeStudente;
+            cellaNomeProfRec.textContent = nomeProfRec;
+            cellaRecensione.textContent = recensione;
+            cellaAzioni.innerHTML = `
+                <button onclick="modificaRecensione(${index})">Modifica</button>
+                <button onclick="eliminaRecensione(this)">Elimina</button>
+            `;
+        }
+
+        function modificaRecensione(index) {
+            var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+            var recensione = recensioni[index];
+            document.getElementById("nomeStudente").value = recensione.nomeStudente;
+            document.getElementById("nomeProfRec").value = recensione.nomeProfRec;
+            document.getElementById("recensione").value = recensione.recensione;
+            editingRecensione = index;  // Set the editing flag
+        }
+
+        function eliminaRecensione(button) {
+            if (confirm("Sei sicuro di voler eliminare questa recensione?")) {
+                var riga = button.parentNode.parentNode;
+                riga.parentNode.removeChild(riga);
+                aggiornaRecensioni();
+            }
+        }
+
+        function aggiornaRecensioni() {
+            var tabella = document.getElementById("tabellaRecensioni").getElementsByTagName('tbody')[0];
+            var recensioni = [];
+            for (var i = 0; i < tabella.rows.length; i++) {
+                var riga = tabella.rows[i];
+                recensioni.push({
+                    nomeStudente: riga.cells[0].textContent,
+                    nomeProfRec: riga.cells[1].textContent,
+                    recensione: riga.cells[2].textContent
+                });
+            }
+            localStorage.setItem("recensioni", JSON.stringify(recensioni));
+        }
+
+        function annullaRecensione() {
+            document.getElementById("nomeStudente").value = '';
+            document.getElementById("nomeProfRec").value = '';
+            document.getElementById("recensione").value = '';
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+    caricaVoti();
+    caricaRecensioni();
+});
+
+// Supponiamo che il 'userId' venga passato al momento del login
+const userId = "user123";  // Questo dovrebbe essere dinamico, basato sull'utente loggato
+
+function aggiungiVoto() {
+    var nomeProf = document.getElementById("nomeProf").value;
+    var materia = document.getElementById("materia").value;
+    var voto = document.getElementById("voto").value;
+
+    if (nomeProf && materia && voto) {
+        var voti = JSON.parse(localStorage.getItem("voti")) || [];
+        if (editingVoto !== null) {
+            // Update the existing voto
+            voti[editingVoto] = { nomeProf, materia, voto, userId };  // Associa l'userId
+            editingVoto = null;
+        } else {
+            // Add new voto
+            voti.push({ nomeProf, materia, voto, userId });
+        }
+        localStorage.setItem("voti", JSON.stringify(voti));
+        caricaVoti();
+        annullaInput();
+    } else {
+        alert("Compila tutti i campi!");
+    }
+}
+
+function aggiungiRecensione() {
+    var nomeStudente = document.getElementById("nomeStudente").value;
+    var nomeProfRec = document.getElementById("nomeProfRec").value;
+    var recensione = document.getElementById("recensione").value;
+
+    if (nomeStudente && nomeProfRec && recensione) {
+        var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+        if (editingRecensione !== null) {
+            // Update the existing recensione
+            recensioni[editingRecensione] = { nomeStudente, nomeProfRec, recensione, userId };  // Associa l'userId
+            editingRecensione = null;
+        } else {
+            // Add new recensione
+            recensioni.push({ nomeStudente, nomeProfRec, recensione, userId });
+        }
+        localStorage.setItem("recensioni", JSON.stringify(recensioni));
+        caricaRecensioni();
+        annullaRecensione();
+    } else {
+        alert("Compila tutti i campi!");
+    }
+}
+
+// Funzione per caricare i voti, solo quelli associati all'utente
+function caricaVoti() {
+    var voti = JSON.parse(localStorage.getItem("voti")) || [];
+    var tabella = document.getElementById("tabellaVoti").getElementsByTagName('tbody')[0];
+    tabella.innerHTML = '';  // Clear the table before reloading
+
+    voti.forEach(function (voto, index) {
+        if (voto.userId === userId) {  // Mostra solo i voti dell'utente loggato
+            aggiungiRigaVoto(voto.nomeProf, voto.materia, voto.voto, index);
+        }
+    });
+}
+
+// Funzione per caricare le recensioni, solo quelle associate all'utente
+function caricaRecensioni() {
+    var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+    var tabella = document.getElementById("tabellaRecensioni").getElementsByTagName('tbody')[0];
+    tabella.innerHTML = '';  // Clear the table before reloading
+
+    recensioni.forEach(function (recensione, index) {
+        if (recensione.userId === userId) {  // Mostra solo le recensioni dell'utente loggato
+            aggiungiRigaRecensione(recensione.nomeStudente, recensione.nomeProfRec, recensione.recensione, index);
+        }
+    });
+}
+
+// Modifica di un voto
+function modificaVoto(index) {
+    var voti = JSON.parse(localStorage.getItem("voti")) || [];
+    var voto = voti[index];
+    if (voto.userId === userId) {  // Controlla che l'utente sia il proprietario
+        document.getElementById("nomeProf").value = voto.nomeProf;
+        document.getElementById("materia").value = voto.materia;
+        document.getElementById("voto").value = voto.voto;
+        editingVoto = index;  // Set the editing flag
+    } else {
+        alert("Non puoi modificare questo voto!");
+    }
+}
+
+// Modifica di una recensione
+function modificaRecensione(index) {
+    var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+    var recensione = recensioni[index];
+    if (recensione.userId === userId) {  // Controlla che l'utente sia il proprietario
+        document.getElementById("nomeStudente").value = recensione.nomeStudente;
+        document.getElementById("nomeProfRec").value = recensione.nomeProfRec;
+        document.getElementById("recensione").value = recensione.recensione;
+        editingRecensione = index;  // Set the editing flag
+    } else {
+        alert("Non puoi modificare questa recensione!");
+    }
+}
+
+// Elimina un voto
+function eliminaVoto(button) {
+    if (confirm("Sei sicuro di voler eliminare questo voto?")) {
+        var riga = button.parentNode.parentNode;
+        var index = riga.rowIndex - 1;
+        var voti = JSON.parse(localStorage.getItem("voti")) || [];
+        var voto = voti[index];
+        if (voto.userId === userId) {  // Verifica che l'utente sia il proprietario del voto
+            voti.splice(index, 1);
+            localStorage.setItem("voti", JSON.stringify(voti));
+            caricaVoti();
+        } else {
+            alert("Non puoi eliminare questo voto!");
+        }
+    }
+}
+
+// Elimina una recensione
+function eliminaRecensione(button) {
+    if (confirm("Sei sicuro di voler eliminare questa recensione?")) {
+        var riga = button.parentNode.parentNode;
+        var index = riga.rowIndex - 1;
+        var recensioni = JSON.parse(localStorage.getItem("recensioni")) || [];
+        var recensione = recensioni[index];
+        if (recensione.userId === userId) {  // Verifica che l'utente sia il proprietario della recensione
+            recensioni.splice(index, 1);
+            localStorage.setItem("recensioni", JSON.stringify(recensioni));
+            caricaRecensioni();
+        } else {
+            alert("Non puoi eliminare questa recensione!");
+        }
+    }
+}
+
+    </script>
+
+</body>
+
+</html>

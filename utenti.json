@@ -1,0 +1,102 @@
+[
+  {
+    "username": "andrea",
+    "password": "admin"
+  },
+  {
+    "username": "patty",
+    "password": "flash"
+  }, 
+  {
+    "username": "snicotra",
+    "password": "nicotra"
+  },
+  {
+    "username": "aabdelkader",
+    "password": "abdelkader"
+  },
+  {
+    "username": "jabbas",
+    "password": "abbas"
+  },
+  {
+    "username": "abelloni",
+    "password": "belloni"
+  },
+  {
+    "username": "gbrambilla",
+    "password": "brambilla"
+  },
+  {
+    "username": "mcozzolino",
+    "password": "cozzolino"
+  },
+  {
+    "username": "dcutroneo",
+    "password": "cutroneo"
+  },
+  {
+    "username": "mdalessandro",
+    "password": "michele"
+  },
+  {
+    "username": "adelucia",
+    "password": "delucia"
+  },
+  {
+    "username": "adiaz",
+    "password": "diaz"
+  },
+  {
+    "username": "mvalverde",
+    "password": "valverde"
+  },
+  {
+    "username": "gezecchia",
+    "password": "ezecchia"
+  },
+  {
+    "username": "rhossain",
+    "password": "hossain"
+  },
+  {
+    "username": "mmarino",
+    "password": "marino"
+  },
+  {
+    "username": "dmoffa",
+    "password": "moffa"
+  },
+  {
+    "username": "mmolica",
+    "password": "molica"
+  },
+  {
+    "username": "amoussa",
+    "password": "moussa"
+  },
+  {
+    "username": "rnatale",
+    "password": "natale"
+  },
+  {
+    "username": "kramoun",
+    "password": "ramoun"
+  },
+  {
+    "username": "arezk",
+    "password": "rezk"
+  },
+  {
+    "username": "zsallam",
+    "password": "sallam"
+  },
+  {
+    "username": "atalha",
+    "password": "talha"
+  },
+  {
+    "username": "dcamolese",
+    "password": "camolese"
+  }
+]
